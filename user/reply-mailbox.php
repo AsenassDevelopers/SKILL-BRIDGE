@@ -11,15 +11,12 @@ if(empty($_SESSION['id_user'])) {
 require_once("../db.php");
 
 if(isset($_POST)) {
-	$to  = $_POST['to'];
-
-	$subject = mysqli_real_escape_string($conn, $_POST['subject']);
 	$message = mysqli_real_escape_string($conn, $_POST['description']);
 
-	$sql = "INSERT INTO mailbox (id_fromuser, fromuser, id_touser, subject, message) VALUES ('$_SESSION[id_user]', 'user', '$to', '$subject', '$message')";
+	$sql = "INSERT INTO reply_mailbox (id_mailbox, id_user, usertype, message) VALUES ('$_POST[id_mail]', '$_SESSION[id_user]', 'user', '$message')";
 
 	if($conn->query($sql) == TRUE) {
-		header("Location: mailbox.php");
+		header("Location: read-mail.php?id_mail=".$_POST['id_mail']);
 		exit();
 	} else {
 		echo $conn->error;
