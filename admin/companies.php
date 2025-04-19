@@ -13,7 +13,7 @@ require_once("../db.php");
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>SkillBridge | Active Jobs</title>
+  <title>SkillBridge | Company Management</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <!-- Bootstrap 5 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -97,6 +97,50 @@ require_once("../db.php");
       margin-bottom: 20px;
     }
     
+    .status-badge {
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    
+    .status-active {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    
+    .status-pending {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+    
+    .status-rejected {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    
+    .action-btn {
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      margin: 0 2px;
+    }
+    
+    .btn-approve {
+      background-color: #28a745;
+      color: white;
+    }
+    
+    .btn-reject {
+      background-color: #dc3545;
+      color: white;
+    }
+    
+    .btn-delete {
+      background-color: #6c757d;
+      color: white;
+    }
+    
     .table th {
       background-color: var(--primary-blue);
       color: white;
@@ -104,21 +148,6 @@ require_once("../db.php");
     
     .table-hover tbody tr:hover {
       background-color: rgba(0,102,204,0.05);
-    }
-    
-    .action-btn {
-      color: var(--primary-blue);
-      transition: all 0.3s;
-      margin: 0 5px;
-    }
-    
-    .action-btn:hover {
-      color: var(--accent-orange);
-      transform: scale(1.2);
-    }
-    
-    .action-btn.delete {
-      color: #dc3545;
     }
     
     .welcome-box {
@@ -169,49 +198,74 @@ require_once("../db.php");
               <a class="nav-link" href="dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link active" href="active-jobs.php"><i class="fas fa-briefcase"></i> Active Jobs</a>
+              <a class="nav-link" href="active-jobs.php"><i class="fas fa-briefcase"></i> Active Jobs</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="applications.php"><i class="fas fa-address-card"></i> Applications</a>
+              <a class="nav-link" href="applications.php"><i class="fas fa-user-graduate"></i> Candidates</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="companies.php"><i class="fas fa-building"></i> Companies</a>
+              <a class="nav-link active" href="companies.php"><i class="fas fa-building"></i> Companies</a>
             </li>
           </ul>
         </div>
       </div>
       <div class="col-md-9">
         <div class="content-container">
-          <h2 class="page-title"><i class="fas fa-briefcase me-2"></i>Active Job Posts</h2>
+          <h2 class="page-title"><i class="fas fa-building me-2"></i>Company Management</h2>
           
           <div class="table-responsive">
-            <table id="jobsTable" class="table table-hover table-striped">
+            <table id="companiesTable" class="table table-hover table-striped">
               <thead>
                 <tr>
-                  <th>Job Title</th>
                   <th>Company</th>
-                  <th>Date Posted</th>
+                  <th>Contact</th>
+                  <th>Email</th>
+                  <th>Location</th>
+                  <th>Status</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 <?php
-                $sql = "SELECT job_post.*, company.companyname FROM job_post INNER JOIN company ON job_post.id_company=company.id_company";
+                $sql = "SELECT * FROM company";
                 $result = $conn->query($sql);
                 if($result->num_rows > 0) {
                   while($row = $result->fetch_assoc()) {
                 ?>
                 <tr>
-                  <td><?php echo $row['jobtitle']; ?></td>
-                  <td><?php echo $row['companyname']; ?></td>
-                  <td><?php echo date("d-M-Y", strtotime($row['createdat'])); ?></td>
                   <td>
-                    <a href="view-job-post.php?id=<?php echo $row['id_jobpost']; ?>" class="action-btn" title="View Details">
-                      <i class="fas fa-eye"></i>
-                    </a>
-                    <a href="delete-job-post.php?id=<?php echo $row['id_jobpost']; ?>" class="action-btn delete" title="Delete Job" onclick="return confirm('Are you sure you want to delete this job post?');">
-                      <i class="fas fa-trash"></i>
-                    </a>
+                    <strong><?php echo $row['companyname']; ?></strong><br>
+                    <small class="text-muted"><?php echo $row['name']; ?></small>
+                  </td>
+                  <td><?php echo $row['contactno']; ?></td>
+                  <td><?php echo $row['email']; ?></td>
+                  <td>
+                    <?php echo $row['city']; ?>, <?php echo $row['state']; ?><br>
+                    <small><?php echo $row['country']; ?></small>
+                  </td>
+                  <td>
+                    <?php
+                    if($row['active'] == '1') {
+                      echo '<span class="status-badge status-active">Active</span>';
+                    } else if($row['active'] == '2') {
+                      echo '<span class="status-badge status-pending">Pending</span>';
+                    } else if($row['active'] == '3') {
+                      echo '<span class="status-badge status-rejected">Inactive</span>';
+                    } else if($row['active'] == '0') {
+                      echo '<span class="status-badge status-rejected">Rejected</span>';
+                    }
+                    ?>
+                  </td>
+                  <td>
+                    <?php
+                    if($row['active'] == '2') {
+                      echo '<a href="approve-company.php?id='.$row['id_company'].'" class="action-btn btn-approve">Approve</a>';
+                      echo '<a href="reject-company.php?id='.$row['id_company'].'" class="action-btn btn-reject">Reject</a>';
+                    } else if($row['active'] == '3') {
+                      echo '<a href="approve-company.php?id='.$row['id_company'].'" class="action-btn btn-approve">Reactivate</a>';
+                    }
+                    ?>
+                    <a href="delete-company.php?id=<?php echo $row['id_company']; ?>" class="action-btn btn-delete" onclick="return confirm('Are you sure you want to delete this company?');">Delete</a>
                   </td>
                 </tr>
                 <?php
@@ -245,7 +299,7 @@ require_once("../db.php");
 
   <script>
     $(document).ready(function() {
-      $('#jobsTable').DataTable({
+      $('#companiesTable').DataTable({
         "paging": true,
         "lengthChange": true,
         "searching": true,
@@ -255,12 +309,12 @@ require_once("../db.php");
         "responsive": true,
         "language": {
           "search": "_INPUT_",
-          "searchPlaceholder": "Search jobs...",
-          "lengthMenu": "Show _MENU_ jobs per page",
-          "zeroRecords": "No matching jobs found",
-          "info": "Showing _START_ to _END_ of _TOTAL_ jobs",
-          "infoEmpty": "No jobs available",
-          "infoFiltered": "(filtered from _MAX_ total jobs)"
+          "searchPlaceholder": "Search companies...",
+          "lengthMenu": "Show _MENU_ companies per page",
+          "zeroRecords": "No matching companies found",
+          "info": "Showing _START_ to _END_ of _TOTAL_ companies",
+          "infoEmpty": "No companies available",
+          "infoFiltered": "(filtered from _MAX_ total companies)"
         }
       });
     });

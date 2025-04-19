@@ -13,7 +13,7 @@ require_once("../db.php");
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>SkillBridge | Active Jobs</title>
+  <title>SkillBridge | Candidate Database</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <!-- Bootstrap 5 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -97,6 +97,24 @@ require_once("../db.php");
       margin-bottom: 20px;
     }
     
+    .skill-badge {
+      background-color: var(--primary-blue);
+      color: white;
+      margin-right: 5px;
+      margin-bottom: 5px;
+      display: inline-block;
+    }
+    
+    .download-btn {
+      color: var(--primary-blue);
+      transition: all 0.3s;
+    }
+    
+    .download-btn:hover {
+      color: var(--accent-orange);
+      transform: scale(1.2);
+    }
+    
     .table th {
       background-color: var(--primary-blue);
       color: white;
@@ -104,21 +122,6 @@ require_once("../db.php");
     
     .table-hover tbody tr:hover {
       background-color: rgba(0,102,204,0.05);
-    }
-    
-    .action-btn {
-      color: var(--primary-blue);
-      transition: all 0.3s;
-      margin: 0 5px;
-    }
-    
-    .action-btn:hover {
-      color: var(--accent-orange);
-      transform: scale(1.2);
-    }
-    
-    .action-btn.delete {
-      color: #dc3545;
     }
     
     .welcome-box {
@@ -169,10 +172,10 @@ require_once("../db.php");
               <a class="nav-link" href="dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link active" href="active-jobs.php"><i class="fas fa-briefcase"></i> Active Jobs</a>
+              <a class="nav-link" href="active-jobs.php"><i class="fas fa-briefcase"></i> Active Jobs</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="applications.php"><i class="fas fa-address-card"></i> Applications</a>
+              <a class="nav-link active" href="applications.php"><i class="fas fa-user-graduate"></i> Candidates</a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="companies.php"><i class="fas fa-building"></i> Companies</a>
@@ -182,36 +185,47 @@ require_once("../db.php");
       </div>
       <div class="col-md-9">
         <div class="content-container">
-          <h2 class="page-title"><i class="fas fa-briefcase me-2"></i>Active Job Posts</h2>
+          <h2 class="page-title"><i class="fas fa-user-graduate me-2"></i>Candidate Database</h2>
           
           <div class="table-responsive">
-            <table id="jobsTable" class="table table-hover table-striped">
+            <table id="candidatesTable" class="table table-hover table-striped">
               <thead>
                 <tr>
-                  <th>Job Title</th>
-                  <th>Company</th>
-                  <th>Date Posted</th>
-                  <th>Actions</th>
+                  <th>Candidate</th>
+                  <th>Qualification</th>
+                  <th>Skills</th>
+                  <th>Location</th>
+                  <th>Resume</th>
                 </tr>
               </thead>
               <tbody>
                 <?php
-                $sql = "SELECT job_post.*, company.companyname FROM job_post INNER JOIN company ON job_post.id_company=company.id_company";
+                $sql = "SELECT * FROM users";
                 $result = $conn->query($sql);
                 if($result->num_rows > 0) {
                   while($row = $result->fetch_assoc()) {
+                    $skills = $row['skills'];
+                    $skills = explode(',', $skills);
                 ?>
                 <tr>
-                  <td><?php echo $row['jobtitle']; ?></td>
-                  <td><?php echo $row['companyname']; ?></td>
-                  <td><?php echo date("d-M-Y", strtotime($row['createdat'])); ?></td>
+                  <td><?php echo $row['firstname'].' '.$row['lastname']; ?></td>
+                  <td><?php echo $row['qualification']; ?></td>
                   <td>
-                    <a href="view-job-post.php?id=<?php echo $row['id_jobpost']; ?>" class="action-btn" title="View Details">
-                      <i class="fas fa-eye"></i>
+                    <?php
+                    foreach ($skills as $value) {
+                      echo '<span class="badge skill-badge">'.$value.'</span>';
+                    }
+                    ?>
+                  </td>
+                  <td><?php echo $row['city'].', '.$row['state']; ?></td>
+                  <td class="text-center">
+                    <?php if($row['resume'] != '') { ?>
+                    <a href="../uploads/resume/<?php echo $row['resume']; ?>" download="<?php echo $row['firstname'].' Resume'; ?>" class="download-btn">
+                      <i class="fas fa-file-pdf fa-lg"></i>
                     </a>
-                    <a href="delete-job-post.php?id=<?php echo $row['id_jobpost']; ?>" class="action-btn delete" title="Delete Job" onclick="return confirm('Are you sure you want to delete this job post?');">
-                      <i class="fas fa-trash"></i>
-                    </a>
+                    <?php } else { ?>
+                    <span class="text-muted">No Resume</span>
+                    <?php } ?>
                   </td>
                 </tr>
                 <?php
@@ -245,7 +259,7 @@ require_once("../db.php");
 
   <script>
     $(document).ready(function() {
-      $('#jobsTable').DataTable({
+      $('#candidatesTable').DataTable({
         "paging": true,
         "lengthChange": true,
         "searching": true,
@@ -255,12 +269,12 @@ require_once("../db.php");
         "responsive": true,
         "language": {
           "search": "_INPUT_",
-          "searchPlaceholder": "Search jobs...",
-          "lengthMenu": "Show _MENU_ jobs per page",
-          "zeroRecords": "No matching jobs found",
-          "info": "Showing _START_ to _END_ of _TOTAL_ jobs",
-          "infoEmpty": "No jobs available",
-          "infoFiltered": "(filtered from _MAX_ total jobs)"
+          "searchPlaceholder": "Search candidates...",
+          "lengthMenu": "Show _MENU_ candidates per page",
+          "zeroRecords": "No matching candidates found",
+          "info": "Showing _START_ to _END_ of _TOTAL_ candidates",
+          "infoEmpty": "No candidates available",
+          "infoFiltered": "(filtered from _MAX_ total candidates)"
         }
       });
     });
